@@ -1,6 +1,12 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const URL = require('url').URL;
 
-const request = JSON.parse(process.argv[2]);
+const [, , ...args] = process.argv;
+
+const request = args[0].startsWith('-f ')
+    ? JSON.parse(fs.readFileSync(new URL(args[0].substring(3))))
+    : JSON.parse(args[0]);
 
 const getOutput = async (page, request) => {
     let output;
@@ -40,7 +46,7 @@ const callChrome = async () => {
             await page.setUserAgent(request.options.userAgent);
         }
 
-        if(request.options && request.options.device) {
+        if (request.options && request.options.device) {
             const devices = require('puppeteer/DeviceDescriptors');
             const device = devices[request.options.device];
             await page.emulate(device);
@@ -94,8 +100,8 @@ const callChrome = async () => {
         }
 
         if (request.options && request.options.addStyleTag) {
-			await page.addStyleTag( JSON.parse( request.options.addStyleTag ) );
-		}
+            await page.addStyleTag(JSON.parse(request.options.addStyleTag));
+        }
 
         if (request.options.delay) {
             await page.waitFor(request.options.delay);
@@ -103,8 +109,8 @@ const callChrome = async () => {
 
         if (request.options.selector) {
             const element = await page.$(request.options.selector);
-            if(element === null) {
-                throw { type: 'ElementNotFound' };
+            if (element === null) {
+                throw {type: 'ElementNotFound'};
             }
 
             request.options.clip = await element.boundingBox();
@@ -132,7 +138,7 @@ const callChrome = async () => {
 
         console.error(exception);
 
-        if(exception.type === 'ElementNotFound') {
+        if (exception.type === 'ElementNotFound') {
             process.exit(2);
         }
 
